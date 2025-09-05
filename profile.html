@@ -18,9 +18,7 @@
     <a class="navbar-brand" href="index.html">CyberLabs Fortress</a>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link nav-auth" href="login.html">Login</a></li>
         <li class="nav-item d-none nav-profile"><a class="nav-link active" href="profile.html">Profile</a></li>
-        <li class="nav-item d-none nav-admin"><a class="nav-link" href="admin.html">Admin</a></li>
       </ul>
     </div>
   </div>
@@ -33,9 +31,12 @@
         <h5>Account</h5>
         <p><strong>Username:</strong> <span id="pUsername"></span></p>
         <p><strong>Email:</strong> <span id="pEmail"></span></p>
+        <p><strong>Role:</strong> <span id="pRole"></span></p>
         <div class="d-grid gap-2">
           <button id="btnLogout" class="btn btn-outline-danger">Logout</button>
           <button id="btnResetPassword" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">Reset Password</button>
+          <!-- Admin panel link - only visible to admin users -->
+          <a id="adminLink" class="btn btn-outline-warning d-none" href="admin.html">Admin Panel</a>
         </div>
       </div>
       
@@ -133,6 +134,12 @@
   const user = getCurrentUserObj();
   document.getElementById('pUsername').textContent = user.username;
   document.getElementById('pEmail').textContent = user.email;
+  document.getElementById('pRole').textContent = user.role;
+
+  // Show admin link only for admin users
+  if (user.role === 'admin') {
+    document.getElementById('adminLink').classList.remove('d-none');
+  }
 
   document.getElementById('btnLogout').onclick = () => logoutUser();
 
@@ -224,11 +231,25 @@ function calculateAndDisplayStats(user) {
   
   // Calculate category progress
   const categories = {
-    'Windows Forensics': { completed: 0, total: 8 },
+    'Windows Forensics': { completed: 0, total: 10 },
     'Network Analysis': { completed: 0, total: 5 },
-    'Malware Analysis': { completed: 0, total: 4 },
-    'Memory Forensics': { completed: 0, total: 3 }
+    'Malware Analysis': { completed: 0, total: 3 },
+    'Memory Forensics': { completed: 0, total: 2 }
   };
+  
+  // Count completed labs by category
+  Object.entries(progress).forEach(([labId, labProgress]) => {
+    if (labProgress && labProgress.completedOverall) {
+      // Determine which category this lab belongs to
+      if (labId.startsWith('lab')) {
+        const labNum = parseInt(labId.replace('lab', ''));
+        if (labNum >= 1 && labNum <= 10) categories['Windows Forensics'].completed++;
+        else if (labNum >= 11 && labNum <= 15) categories['Network Analysis'].completed++;
+        else if (labNum >= 16 && labNum <= 18) categories['Malware Analysis'].completed++;
+        else if (labNum >= 19 && labNum <= 20) categories['Memory Forensics'].completed++;
+      }
+    }
+  });
   
   // Update stats display
   document.getElementById('completedLabs').textContent = completedLabs;
@@ -330,8 +351,8 @@ function showLabAnswers(labId){
   const p = user.progress && user.progress[labId];
   if(!p) return alert('No answers submitted yet for ' + labId);
   const answers = p.answers || {};
-  const out = Object.keys(answers).map(k => `${k}: ${answers[k]}`).join('\\n');
-  alert(`Answers for ${labId}\\nScore: ${p.score}%\\n\\n${out}`);
+  const out = Object.keys(answers).map(k => `${k}: ${answers[k]}`).join('\n');
+  alert(`Answers for ${labId}\nScore: ${p.score}%\n\n${out}`);
 }
 </script>
 

@@ -16,55 +16,86 @@
     <a class="navbar-brand" href="index.html">CyberLabs Fortress</a>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link nav-auth" href="login.html">Login</a></li>
         <li class="nav-item d-none nav-profile"><a class="nav-link" href="profile.html">Profile</a></li>
-        <li class="nav-item d-none nav-admin"><a class="nav-link active" href="admin.html">Admin</a></li>
       </ul>
     </div>
   </div>
 </nav>
 
 <main class="container py-5">
-  <h3>Admin Dashboard</h3>
-  <div class="row">
-    <div class="col-lg-6">
-      <div class="card p-3 mb-3">
-        <h5>Users</h5>
-        <div id="usersTable"></div>
-      </div>
-    </div>
+  <!-- Add admin access check -->
+  <div id="adminAccessDenied" class="alert alert-danger text-center py-5">
+    <h4>Access Denied</h4>
+    <p>You do not have permission to access the admin panel.</p>
+    <a href="index.html" class="btn btn-primary mt-3">Return to Home</a>
+  </div>
 
-    <div class="col-lg-6">
-      <div class="card p-3 mb-3">
-        <h5>Add User</h5>
-        <form id="addUserForm">
-          <div class="mb-2"><input id="a_username" placeholder="username" class="form-control" required></div>
-          <div class="mb-2"><input id="a_email" placeholder="email" class="form-control" required></div>
-          <div class="mb-2"><input id="a_password" placeholder="password" class="form-control" required></div>
-          <div class="mb-2">
-            <select id="a_role" class="form-select">
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <button class="btn btn-success">Add User</button>
-        </form>
+  <div id="adminContent" class="d-none">
+    <h3>Admin Dashboard</h3>
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="card p-3 mb-3">
+          <h5>Users</h5>
+          <div id="usersTable"></div>
+        </div>
       </div>
 
-      <div class="card p-3">
-        <h5>Leaderboard</h5>
-        <div id="leaderboard"></div>
+      <div class="col-lg-6">
+        <div class="card p-3 mb-3">
+          <h5>Add User</h5>
+          <form id="addUserForm">
+            <div class="mb-2"><input id="a_username" placeholder="username" class="form-control" required></div>
+            <div class="mb-2"><input id="a_email" placeholder="email" class="form-control" required></div>
+            <div class="mb-2"><input id="a_password" placeholder="password" class="form-control" required></div>
+            <div class="mb-2">
+              <select id="a_role" class="form-select">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button class="btn btn-success">Add User</button>
+          </form>
+        </div>
+
+        <div class="card p-3">
+          <h5>Leaderboard</h5>
+          <div id="leaderboard"></div>
+        </div>
       </div>
     </div>
   </div>
 </main>
 
 <script>
+// Check admin access on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const currentUser = getCurrentUsername();
+  if (!currentUser) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  const user = getCurrentUserObj();
+  if (!user || user.role !== 'admin') {
+    document.getElementById('adminAccessDenied').classList.remove('d-none');
+    document.getElementById('adminContent').classList.add('d-none');
+    return;
+  }
+  
+  // User is admin, show admin content
+  document.getElementById('adminAccessDenied').classList.add('d-none');
+  document.getElementById('adminContent').classList.remove('d-none');
+  
+  // Render admin content
+  renderUsers();
+  renderLeaderboard();
+});
+
 function renderUsers(){
   const users = getUsers();
   let html = '<table class="table table-sm"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Completed</th><th>Actions</th></tr></thead><tbody>';
   users.forEach(u => {
-    const completed = Object.values(u.progress || {}).filter(x => x && x.completed).length;
+    const completed = Object.values(u.progress || {}).filter(x => x && x.completedOverall).length;
     html += `<tr>
       <td>${u.username}</td>
       <td>${u.email}</td>
@@ -92,7 +123,7 @@ function renderLeaderboard(){
 function viewUser(username){
   const u = findUser(username);
   if(!u) return alert('User not found.');
-  const details = `Username: ${u.username}\\nEmail: ${u.email}\\nRole: ${u.role}\\nProgress: ${JSON.stringify(u.progress || {}, null, 2)}`;
+  const details = `Username: ${u.username}\nEmail: ${u.email}\nRole: ${u.role}\nProgress: ${JSON.stringify(u.progress || {}, null, 2)}`;
   alert(details);
 }
 
@@ -102,6 +133,7 @@ function removeUser(username){
   renderUsers();
   renderLeaderboard();
 }
+
 function toggleRole(username){
   const u = findUser(username);
   if(!u) return;
@@ -127,10 +159,6 @@ document.getElementById('addUserForm').addEventListener('submit',(e)=>{
     alert(err.message || 'Failed to add user.');
   }
 });
-
-// initial render
-renderUsers();
-renderLeaderboard();
 </script>
 </body>
 </html>
