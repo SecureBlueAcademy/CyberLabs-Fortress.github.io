@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lab 1 - Prefetch File Analysis</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <script src="scripts/auth.js"></script>
+  <script src="scripts/labs.js"></script>
+  <script src="scripts/common.js"></script>
+  <script src="scripts/badges.js"></script>
+</head>
+<body data-protected="true">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">CyberLabs Fortress</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link nav-auth" href="login.html">Login</a></li>
+        <li class="nav-item nav-profile"><a class="nav-link" href="profile.html">Profile</a></li>
+        <li class="nav-item nav-admin"><a class="nav-link" href="admin.html">Admin</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <h3>Lab 1: Prefetch File Analysis</h3>
+  <p>Investigate Prefetch artifact to identify the executable and execution times.</p>
+  <p><a href="labs/files/lab1_prefetch.csv" download class="btn btn-secondary">Download lab1_prefetch.csv</a></p>
+
+  <div id="labCompletionAlert" class="alert alert-success d-none">
+    <h4>Lab Completed!</h4>
+    <p>You have successfully completed this lab. <button class="btn btn-sm btn-outline-secondary ms-2" onclick="resetLab()">Reset Lab</button></p>
+  </div>
+
+  <form id="labForm">
+    <div id="questionsArea"></div>
+  </form>
+
+  <div id="feedback" class="mt-4"></div>
+</main>
+
+<script>
+const LAB_ID = 'lab1';
+const QUESTIONS = [
+  "What is the name of the executable found in the Prefetch file?",
+  "What was the last execution time? (YYYY-MM-DD HH:MM)",
+  "How many times was the program executed?"
+];
+const CORRECT_ANSWERS = ["EXFIL.EXE","2023-02-18 14:33","5"];
+
+(function(){
+  const cur = getCurrentUsername();
+  if(!cur) return window.location.href = 'login.html';
+  
+  // Get user progress
+  const user = getCurrentUserObj();
+  const progress = user.progress || {};
+  const labProgress = progress[LAB_ID] || { answers: {}, completedQuestions: [] };
+  
+  // Check if lab is completed
+  if (labProgress.completedOverall) {
+    document.getElementById('labCompletionAlert').classList.remove('d-none');
+    document.getElementById('labForm').classList.add('d-none');
+  }
+  
+  const qa = document.getElementById('questionsArea');
+  let html = '';
+  
+  QUESTIONS.forEach((q, idx) => {
+    const questionId = `q${idx+1}`;
+    const isCompleted = labProgress.completedQuestions && labProgress.completedQuestions.includes(questionId);
+    const userAnswer = labProgress.answers && labProgress.answers[questionId];
+    
+    html += `<div class="mb-3">
+      <label class="form-label">${idx+1}. ${q}</label>
+      <input class="form-control" name="${questionId}" id="${questionId}" 
+             value="${userAnswer || ''}" ${isCompleted ? 'readonly' : ''} />
+      <div id="fb${idx+1}" class="small mt-1"></div>
+      ${!isCompleted ? `<button type="button" class="btn btn-sm btn-primary mt-2" onclick="submitAnswer(${idx})">Submit Answer</button>` : 
+        `<div class="text-success mt-2"><i class="bi bi-check-circle"></i> Correct!</div>`}
+    </div>`;
+  });
+  
+  qa.innerHTML = html;
+  
+  // Update feedback for already completed questions
+  QUESTIONS.forEach((q, idx) => {
+    const questionId = `q${idx+1}`;
+    const isCompleted = labProgress.completedQuestions && labProgress.completedQuestions.includes(questionId);
+    
+    if (isCompleted) {
+      const field = document.getElementById(`fb${idx+1}`);
+      field.textContent = 'Correct!';
+      field.className = 'small mt-1 text-success';
+    }
+  });
+})();
+
+function submitAnswer(index) {
+  const questionId = `q${index+1}`;
+  const answerInput = document.getElementById(questionId);
+  const feedbackEl = document.getElementById(`fb${index+1}`);
+  const userAnswer = answerInput.value.trim();
+  const correctAnswer = CORRECT_ANSWERS[index];
+  
+  if (!userAnswer) {
+    feedbackEl.textContent = 'Please enter an answer';
+    feedbackEl.className = 'small mt-1 text-danger';
+    return;
+  }
+  
+  // Check if answer is correct
+  if (userAnswer.toUpperCase() === correctAnswer.toUpperCase()) {
+    feedbackEl.textContent = 'Correct!';
+    feedbackEl.className = 'small mt-1 text-success';
+    
+    // Disable input and submit button
+    answerInput.readOnly = true;
+    const submitButton = answerInput.nextElementSibling.nextElementSibling;
+    if (submitButton && submitButton.tagName === 'BUTTON') {
+      submitButton.outerHTML = '<div class="text-success mt-2"><i class="bi bi-check-circle"></i> Correct!</div>';
+    }
+    
+    // Save progress
+    const currentUser = getCurrentUsername();
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.username === currentUser);
+    
+    if (userIndex !== -1) {
+      const progress = users[userIndex].progress || {};
+      const labProgress = progress[LAB_ID] || { answers: {}, completedQuestions: [] };
+      
+      // Update answers and completed questions
+      labProgress.answers[questionId] = userAnswer;
+      if (!labProgress.completedQuestions) labProgress.completedQuestions = [];
+      if (!labProgress.completedQuestions.includes(questionId)) {
+        labProgress.completedQuestions.push(questionId);
+      }
+      
+      // Check if all questions are completed
+      if (labProgress.completedQuestions.length === QUESTIONS.length) {
+        const scorePercent = 100; // Perfect score since all answers are correct
+        labProgress.score = scorePercent;
+        labProgress.completedOverall = true;
+        labProgress.ts = Date.now();
+        
+        // Show completion message
+        document.getElementById('labCompletionAlert').classList.remove('d-none');
+        document.getElementById('labForm').classList.add('d-none');
+        
+        // Check for new badges
+        const newBadges = checkAndAwardBadges(users[userIndex]);
+        
+        // Show badge notification if any new badges were awarded
+        if (newBadges.length > 0) {
+          const badgeNames = newBadges.map(b => b.name).join(', ');
+          alert(`Congratulations! You earned new badge(s): ${badgeNames}`);
+        }
+      }
+      
+      // Save updated progress
+      progress[LAB_ID] = labProgress;
+      users[userIndex].progress = progress;
+      saveUsers(users);
+      
+      // Update the current user object in localStorage
+      localStorage.setItem(CUR_USER_KEY, currentUser);
+    }
+    
+  } else {
+    feedbackEl.textContent = 'Incorrect. Please try again.';
+    feedbackEl.className = 'small mt-1 text-danger';
+  }
+}
+
+function resetLab() {
+  if (!confirm('Are you sure you want to reset this lab? All your progress will be lost.')) return;
+  
+  const currentUser = getCurrentUsername();
+  const users = getUsers();
+  const userIndex = users.findIndex(u => u.username === currentUser);
+  
+  if (userIndex !== -1) {
+    const progress = users[userIndex].progress || {};
+    delete progress[LAB_ID];
+    users[userIndex].progress = progress;
+    saveUsers(users);
+    
+    // Reload the page to reset the lab
+    window.location.reload();
+  }
+}
+</script>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</body>
+</html>

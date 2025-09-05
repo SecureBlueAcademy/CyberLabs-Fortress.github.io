@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - CyberLabs Fortress</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <script src="scripts/auth.js"></script>
+  <script src="scripts/labs.js"></script>
+  <script src="scripts/common.js"></script>
+</head>
+<body data-admin="true">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">CyberLabs Fortress</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link nav-auth" href="login.html">Login</a></li>
+        <li class="nav-item d-none nav-profile"><a class="nav-link" href="profile.html">Profile</a></li>
+        <li class="nav-item d-none nav-admin"><a class="nav-link active" href="admin.html">Admin</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <h3>Admin Dashboard</h3>
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="card p-3 mb-3">
+        <h5>Users</h5>
+        <div id="usersTable"></div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card p-3 mb-3">
+        <h5>Add User</h5>
+        <form id="addUserForm">
+          <div class="mb-2"><input id="a_username" placeholder="username" class="form-control" required></div>
+          <div class="mb-2"><input id="a_email" placeholder="email" class="form-control" required></div>
+          <div class="mb-2"><input id="a_password" placeholder="password" class="form-control" required></div>
+          <div class="mb-2">
+            <select id="a_role" class="form-select">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-success">Add User</button>
+        </form>
+      </div>
+
+      <div class="card p-3">
+        <h5>Leaderboard</h5>
+        <div id="leaderboard"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+function renderUsers(){
+  const users = getUsers();
+  let html = '<table class="table table-sm"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Completed</th><th>Actions</th></tr></thead><tbody>';
+  users.forEach(u => {
+    const completed = Object.values(u.progress || {}).filter(x => x && x.completed).length;
+    html += `<tr>
+      <td>${u.username}</td>
+      <td>${u.email}</td>
+      <td>${u.role}</td>
+      <td>${completed}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="viewUser('${u.username}')">View</button>
+        <button class="btn btn-sm btn-warning" onclick="toggleRole('${u.username}')">Toggle Role</button>
+        <button class="btn btn-sm btn-danger" onclick="removeUser('${u.username}')">Delete</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('usersTable').innerHTML = html;
+}
+
+function renderLeaderboard(){
+  const lb = computeLeaderboard();
+  let html = '<ol>';
+  lb.forEach(u => html += `<li>${u.username} - ${u.completedCount} labs</li>`);
+  html += '</ol>';
+  document.getElementById('leaderboard').innerHTML = html;
+}
+
+function viewUser(username){
+  const u = findUser(username);
+  if(!u) return alert('User not found.');
+  const details = `Username: ${u.username}\\nEmail: ${u.email}\\nRole: ${u.role}\\nProgress: ${JSON.stringify(u.progress || {}, null, 2)}`;
+  alert(details);
+}
+
+function removeUser(username){
+  if(!confirm('Delete user ' + username + ' ?')) return;
+  deleteUser(username);
+  renderUsers();
+  renderLeaderboard();
+}
+function toggleRole(username){
+  const u = findUser(username);
+  if(!u) return;
+  const newRole = u.role === 'admin' ? 'user' : 'admin';
+  updateUserRole(username, newRole);
+  renderUsers();
+  renderLeaderboard();
+}
+
+document.getElementById('addUserForm').addEventListener('submit',(e)=>{
+  e.preventDefault();
+  const u = document.getElementById('a_username').value.trim();
+  const em = document.getElementById('a_email').value.trim();
+  const p = document.getElementById('a_password').value;
+  const r = document.getElementById('a_role').value;
+  try {
+    addUser({username:u, email:em, password:p, role:r});
+    alert('User added.');
+    renderUsers();
+    renderLeaderboard();
+    e.target.reset();
+  } catch(err) {
+    alert(err.message || 'Failed to add user.');
+  }
+});
+
+// initial render
+renderUsers();
+renderLeaderboard();
+</script>
+</body>
+</html>
