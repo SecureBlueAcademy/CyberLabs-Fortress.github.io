@@ -18,6 +18,8 @@
     <a class="navbar-brand" href="index.html">CyberLabs Fortress</a>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="content.html">Labs</a></li>
         <li class="nav-item d-none nav-profile"><a class="nav-link active" href="profile.html">Profile</a></li>
       </ul>
     </div>
@@ -128,6 +130,15 @@
 </div>
 
 <script>
+// Get labs from localStorage
+function getLabs() {
+  try {
+    return JSON.parse(localStorage.getItem('clf_labs')) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
 (function(){
   const current = getCurrentUsername();
   if(!current) return window.location.href = 'login.html';
@@ -210,6 +221,7 @@
 })();
 
 function calculateAndDisplayStats(user) {
+  const labs = getLabs();
   const progress = user.progress || {};
   const completedLabs = Object.values(progress).filter(p => p && p.completedOverall).length;
   const totalScore = Object.values(progress).reduce((sum, p) => sum + (p.score || 0), 0);
@@ -229,25 +241,19 @@ function calculateAndDisplayStats(user) {
     if (diffDays <= 1) streak = 1; // Simplified logic
   }
   
-  // Calculate category progress
-  const categories = {
-    'Windows Forensics': { completed: 0, total: 10 },
-    'Network Analysis': { completed: 0, total: 5 },
-    'Malware Analysis': { completed: 0, total: 3 },
-    'Memory Forensics': { completed: 0, total: 2 }
-  };
+  // Calculate category progress dynamically based on actual labs
+  const categories = {};
   
-  // Count completed labs by category
-  Object.entries(progress).forEach(([labId, labProgress]) => {
-    if (labProgress && labProgress.completedOverall) {
-      // Determine which category this lab belongs to
-      if (labId.startsWith('lab')) {
-        const labNum = parseInt(labId.replace('lab', ''));
-        if (labNum >= 1 && labNum <= 10) categories['Windows Forensics'].completed++;
-        else if (labNum >= 11 && labNum <= 15) categories['Network Analysis'].completed++;
-        else if (labNum >= 16 && labNum <= 18) categories['Malware Analysis'].completed++;
-        else if (labNum >= 19 && labNum <= 20) categories['Memory Forensics'].completed++;
-      }
+  // Initialize categories from existing labs
+  labs.forEach(lab => {
+    if (!categories[lab.category]) {
+      categories[lab.category] = { completed: 0, total: 0 };
+    }
+    categories[lab.category].total++;
+    
+    // Check if this lab is completed
+    if (progress[lab.id] && progress[lab.id].completedOverall) {
+      categories[lab.category].completed++;
     }
   });
   
@@ -256,12 +262,12 @@ function calculateAndDisplayStats(user) {
   document.getElementById('totalScore').textContent = `${avgScore}%`;
   document.getElementById('currentStreak').textContent = streak;
   document.getElementById('totalBadges').textContent = calculateBadgeCount(user);
-  document.getElementById('progressSummary').textContent = `${completedLabs} / 20 labs completed`;
+  document.getElementById('progressSummary').textContent = `${completedLabs} / ${labs.length} labs completed`;
   
   // Render category progress
   let categoryHtml = '';
   for (const [category, data] of Object.entries(categories)) {
-    const percent = Math.round((data.completed / data.total) * 100);
+    const percent = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0;
     categoryHtml += `
       <div class="mb-2">
         <div class="d-flex justify-content-between">
@@ -274,72 +280,55 @@ function calculateAndDisplayStats(user) {
       </div>
     `;
   }
-  document.getElementById('categoryProgress').innerHTML = categoryHtml;
+  document.getElementById('categoryProgress').innerHTML = categoryHtml || '<p class="text-muted">No labs available</p>';
 }
 
 function renderLabProgress(user, filter = 'all') {
+  const labs = getLabs();
   const progress = user.progress || {};
   const completedCount = Object.values(progress).filter(p => p && p.completedOverall).length;
-  document.getElementById('progressSummary').textContent = `${completedCount} / 20 labs completed`;
-
-  // Lab data with categories
-  const labData = [
-    { id: 'lab1', title: 'Prefetch File Analysis', category: 'Windows Forensics', difficulty: 'beginner' },
-    { id: 'lab2', title: 'ShimCache Analysis', category: 'Windows Forensics', difficulty: 'intermediate' },
-    { id: 'lab3', title: 'Browser History Forensics', category: 'Windows Forensics', difficulty: 'beginner' },
-    { id: 'lab4', title: 'Amcache Analysis', category: 'Windows Forensics', difficulty: 'intermediate' },
-    { id: 'lab5', title: 'LNK File Analysis', category: 'Windows Forensics', difficulty: 'beginner' },
-    { id: 'lab6', title: 'Event Log Review', category: 'Windows Forensics', difficulty: 'advanced' },
-    { id: 'lab7', title: 'Registry Persistence', category: 'Windows Forensics', difficulty: 'intermediate' },
-    { id: 'lab8', title: 'Recycle Bin Artifacts', category: 'Windows Forensics', difficulty: 'beginner' },
-    { id: 'lab9', title: 'PowerShell Execution Analysis', category: 'Windows Forensics', difficulty: 'advanced' },
-    { id: 'lab10', title: 'MFT Timeline Analysis', category: 'Windows Forensics', difficulty: 'advanced' },
-    { id: 'lab11', title: 'Network Traffic Analysis', category: 'Network Analysis', difficulty: 'intermediate' },
-    { id: 'lab12', title: 'DNS Investigation', category: 'Network Analysis', difficulty: 'beginner' },
-    { id: 'lab13', title: 'HTTP Attack Analysis', category: 'Network Analysis', difficulty: 'advanced' },
-    { id: 'lab14', title: 'Firewall Log Analysis', category: 'Network Analysis', difficulty: 'intermediate' },
-    { id: 'lab15', title: 'IDS Alert Triage', category: 'Network Analysis', difficulty: 'advanced' },
-    { id: 'lab16', title: 'Malware Static Analysis', category: 'Malware Analysis', difficulty: 'intermediate' },
-    { id: 'lab17', title: 'Malware Dynamic Analysis', category: 'Malware Analysis', difficulty: 'advanced' },
-    { id: 'lab18', title: 'YARA Rule Creation', category: 'Malware Analysis', difficulty: 'intermediate' },
-    { id: 'lab19', title: 'Memory Acquisition', category: 'Memory Forensics', difficulty: 'beginner' },
-    { id: 'lab20', title: 'Memory Analysis with Volatility', category: 'Memory Forensics', difficulty: 'advanced' }
-  ];
+  document.getElementById('progressSummary').textContent = `${completedCount} / ${labs.length} labs completed`;
 
   // Build list
   let html = '<ul class="list-group">';
-  for (const lab of labData) {
-    const s = progress[lab.id];
-    const isCompleted = s && s.completedOverall;
-    
-    // Apply filter
-    if (filter === 'completed' && !isCompleted) continue;
-    if (filter === 'incomplete' && isCompleted) continue;
-    
-    const status = isCompleted ? 
-      `<span class="badge bg-success">Completed (${s.score}%)</span>` : 
-      `<span class="badge bg-secondary">Pending</span>`;
-    
-    const difficultyClass = lab.difficulty === 'beginner' ? 'badge-beginner' : 
-                           lab.difficulty === 'intermediate' ? 'badge-intermediate' : 'badge-advanced';
-    
-    const ts = s && s.ts ? new Date(s.ts).toLocaleString() : '';
-    
-    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-      <div>
-        <strong>${lab.title}</strong> 
-        <span class="badge ${difficultyClass}">${lab.difficulty}</span>
-        <span class="badge badge-category">${lab.category}</span>
-        <br>
-        ${status}
-        <small class="text-muted">${ts}</small>
-      </div>
-      <div>
-        <a href="${lab.id}.html" class="btn btn-sm btn-primary">Open Lab</a>
-        ${ s ? `<button class="btn btn-sm btn-outline-secondary ms-2" onclick="showLabAnswers('${lab.id}')">Answers</button>` : '' }
-      </div>
-    </li>`;
+  
+  if (labs.length === 0) {
+    html += '<li class="list-group-item text-center text-muted">No labs available</li>';
+  } else {
+    for (const lab of labs) {
+      const s = progress[lab.id];
+      const isCompleted = s && s.completedOverall;
+      
+      // Apply filter
+      if (filter === 'completed' && !isCompleted) continue;
+      if (filter === 'incomplete' && isCompleted) continue;
+      
+      const status = isCompleted ? 
+        `<span class="badge bg-success">Completed (${s.score}%)</span>` : 
+        `<span class="badge bg-secondary">Pending</span>`;
+      
+      const difficultyClass = lab.difficulty === 'beginner' ? 'badge-beginner' : 
+                             lab.difficulty === 'intermediate' ? 'badge-intermediate' : 'badge-advanced';
+      
+      const ts = s && s.ts ? new Date(s.ts).toLocaleString() : '';
+      
+      html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <strong>${lab.title}</strong> 
+          <span class="badge ${difficultyClass}">${lab.difficulty}</span>
+          <span class="badge badge-category">${lab.category}</span>
+          <br>
+          ${status}
+          <small class="text-muted">${ts}</small>
+        </div>
+        <div>
+          <a href="${lab.link}" class="btn btn-sm btn-primary">Open Lab</a>
+          ${ s ? `<button class="btn btn-sm btn-outline-secondary ms-2" onclick="showLabAnswers('${lab.id}')">Answers</button>` : '' }
+        </div>
+      </li>`;
+    }
   }
+  
   html += '</ul>';
   document.getElementById('labsList').innerHTML = html;
 }

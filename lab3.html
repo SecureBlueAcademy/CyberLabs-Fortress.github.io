@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lab 1 - Prefetch File Analysis</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <script src="scripts/auth.js"></script>
+  <script src="scripts/labs.js"></script>
+  <script src="scripts/common.js"></script>
+  <script src="scripts/badges.js"></script>
+</head>
+<body data-protected="true">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">CyberLabs Fortress</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item nav-profile"><a class="nav-link" href="profile.html">Profile</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <div id="labHeader" class="mb-4">
+    <h3>Loading Lab...</h3>
+    <p id="labDescription" class="lead"></p>
+  </div>
+
+  <div id="evidenceFileSection" class="mb-4">
+    <!-- Evidence file download will be populated here -->
+  </div>
+
+  <div id="labCompletionAlert" class="alert alert-success d-none">
+    <h4>Lab Completed!</h4>
+    <p>You have successfully completed this lab. <button class="btn btn-sm btn-outline-secondary ms-2" onclick="resetLab()">Reset Lab</button></p>
+  </div>
+
+  <form id="labForm">
+    <div id="questionsArea"></div>
+    <button type="button" id="submitAllButton" class="btn btn-primary mt-3 d-none">Submit All Answers</button>
+  </form>
+
+  <div id="feedback" class="mt-4"></div>
+</main>
+
+<script>
+const LAB_ID = 'lab3';
+
+// Get lab data from localStorage
+function getLabById(labId) {
+  try {
+    const labs = JSON.parse(localStorage.getItem('clf_labs')) || [];
+    return labs.find(lab => lab.id === labId);
+  } catch (e) {
+    return null;
+  }
+}
+
+(function(){
+  const cur = getCurrentUsername();
+  if(!cur) return window.location.href = 'login.html';
+  
+  // Get lab data
+  const labData = getLabById(LAB_ID);
+  if (!labData) {
+    document.getElementById('labHeader').innerHTML = '<div class="alert alert-danger">Lab not found</div>';
+    return;
+  }
+  
+  // Update lab header
+  document.querySelector('#labHeader h3').textContent = labData.title;
+  document.getElementById('labDescription').textContent = labData.description;
+  
+  // Add evidence file download if available
+  if (labData.evidenceFile) {
+    document.getElementById('evidenceFileSection').innerHTML = `
+      <a href="labs/files/${labData.evidenceFile}" download class="btn btn-secondary">
+        <i class="bi bi-download"></i> Download ${labData.evidenceFile}
+      </a>
+    `;
+  }
+  
+  // Get user progress
+  const user = getCurrentUserObj();
+  const progress = user.progress || {};
+  const labProgress = progress[LAB_ID] || { answers: {}, completedQuestions: [] };
+  
+  // Check if lab is completed
+  if (labProgress.completedOverall) {
+    document.getElementById('labCompletionAlert').classList.remove('d-none');
+    document.getElementById('labForm').classList.add('d-none');
+  }
+  
+  // Render questions
+  const qa = document.getElementById('questionsArea');
+  let html = '';
+  
+  labData.questions.forEach((q, idx) => {
+    const questionId = `q${idx+1}`;
+    const isCompleted = labProgress.completedQuestions && labProgress.completedQuestions.includes(questionId);
+    const userAnswer = labProgress.answers && labProgress.answers[questionId];
+    
+    html += `<div class="mb-4 p-3 border rounded question-container" data-question-id="${questionId}">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Question ${idx+1}</h5>
+        <span class="badge bg-info">${q.points} point${q.points !== 1 ? 's' : ''}</span>
+      </div>
+      <p class="fw-bold">${q.text}</p>
+      <div class="row">
+        <div class="col-md-8">
+          <input class="form-control" name="${questionId}" id="${questionId}" 
+                 value="${userAnswer || ''}" ${isCompleted ? 'readonly' : ''} />
+        </div>
+        <div class="col-md-4">
+          ${!isCompleted ? 
+            `<button type="button" class="btn btn-sm btn-primary mt-2 mt-md-0" onclick="submitAnswer(${idx})">Submit Answer</button>` : 
+            `<div class="text-success mt-2 mt-md-0"><i class="bi bi-check-circle"></i> Correct!</div>`
+          }
+        </div>
+      </div>
+      <div id="fb${idx+1}" class="small mt-1"></div>
+    </div>`;
+  });
+  
+  qa.innerHTML = html;
+  
+  // Show submit all button if not all questions are completed
+  const allCompleted = labProgress.completedQuestions && 
+                      labProgress.completedQuestions.length === labData.questions.length;
+  if (!allCompleted && labData.questions.length > 0) {
+    document.getElementById('submitAllButton').classList.remove('d-none');
+  }
+  
+  // Update feedback for already completed questions
+  labData.questions.forEach((q, idx) => {
+    const questionId = `q${idx+1}`;
+    const isCompleted = labProgress.completedQuestions && labProgress.completedQuestions.includes(questionId);
+    
+    if (isCompleted) {
+      const field = document.getElementById(`fb${idx+1}`);
+      field.textContent = 'Correct!';
+      field.className = 'small mt-1 text-success';
+    }
+  });
+})();
+
+function submitAnswer(index) {
+  const labData = getLabById(LAB_ID);
+  if (!labData || !labData.questions[index]) return;
+  
+  const questionId = `q${index+1}`;
+  const answerInput = document.getElementById(questionId);
+  const feedbackEl = document.getElementById(`fb${index+1}`);
+  const userAnswer = answerInput.value.trim();
+  const correctAnswer = labData.questions[index].answer;
+  
+  if (!userAnswer) {
+    feedbackEl.textContent = 'Please enter an answer';
+    feedbackEl.className = 'small mt-1 text-danger';
+    return;
+  }
+  
+  // Check if answer is correct
+  if (userAnswer.toUpperCase() === correctAnswer.toUpperCase()) {
+    feedbackEl.textContent = 'Correct!';
+    feedbackEl.className = 'small mt-1 text-success';
+    
+    // Disable input and submit button
+    answerInput.readOnly = true;
+    const submitButton = answerInput.parentElement.nextElementSibling.querySelector('button');
+    if (submitButton) {
+      submitButton.outerHTML = '<div class="text-success mt-2 mt-md-0"><i class="bi bi-check-circle"></i> Correct!</div>';
+    }
+    
+    // Save progress
+    const currentUser = getCurrentUsername();
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.username === currentUser);
+    
+    if (userIndex !== -1) {
+      const progress = users[userIndex].progress || {};
+      const labProgress = progress[LAB_ID] || { answers: {}, completedQuestions: [] };
+      
+      // Update answers and completed questions
+      labProgress.answers[questionId] = userAnswer;
+      if (!labProgress.completedQuestions) labProgress.completedQuestions = [];
+      if (!labProgress.completedQuestions.includes(questionId)) {
+        labProgress.completedQuestions.push(questionId);
+      }
+      
+      // Check if all questions are completed
+      if (labProgress.completedQuestions.length === labData.questions.length) {
+        // Calculate score based on points
+        let totalPoints = 0;
+        let earnedPoints = 0;
+        
+        labData.questions.forEach((q, idx) => {
+          totalPoints += q.points;
+          if (labProgress.completedQuestions.includes(`q${idx+1}`)) {
+            earnedPoints += q.points;
+          }
+        });
+        
+        const scorePercent = Math.round((earnedPoints / totalPoints) * 100);
+        labProgress.score = scorePercent;
+        labProgress.completedOverall = true;
+        labProgress.ts = Date.now();
+        
+        // Show completion message
+        document.getElementById('labCompletionAlert').classList.remove('d-none');
+        document.getElementById('labForm').classList.add('d-none');
+        
+        // Check for new badges
+        const newBadges = checkAndAwardBadges(users[userIndex]);
+        
+        // Show badge notification if any new badges were awarded
+        if (newBadges.length > 0) {
+          const badgeNames = newBadges.map(b => b.name).join(', ');
+          alert(`Congratulations! You earned new badge(s): ${badgeNames}`);
+        }
+      }
+      
+      // Save updated progress
+      progress[LAB_ID] = labProgress;
+      users[userIndex].progress = progress;
+      saveUsers(users);
+      
+      // Update the current user object in localStorage
+      localStorage.setItem('clf_currentUser', currentUser);
+      
+      // Hide submit all button if all questions are now completed
+      if (labProgress.completedQuestions.length === labData.questions.length) {
+        document.getElementById('submitAllButton').classList.add('d-none');
+      }
+    }
+    
+  } else {
+    feedbackEl.textContent = 'Incorrect. Please try again.';
+    feedbackEl.className = 'small mt-1 text-danger';
+  }
+}
+
+function submitAllAnswers() {
+  const labData = getLabById(LAB_ID);
+  if (!labData) return;
+  
+  let allCorrect = true;
+  
+  // Check all answers
+  labData.questions.forEach((q, index) => {
+    const questionId = `q${index+1}`;
+    const answerInput = document.getElementById(questionId);
+    const userAnswer = answerInput.value.trim();
+    const correctAnswer = q.answer;
+    
+    if (userAnswer.toUpperCase() !== correctAnswer.toUpperCase()) {
+      allCorrect = false;
+      const feedbackEl = document.getElementById(`fb${index+1}`);
+      feedbackEl.textContent = 'Incorrect answer';
+      feedbackEl.className = 'small mt-1 text-danger';
+    }
+  });
+  
+  if (!allCorrect) {
+    alert('Some answers are incorrect. Please check all questions and try again.');
+    return;
+  }
+  
+  // If all answers are correct, submit them one by one
+  labData.questions.forEach((q, index) => {
+    submitAnswer(index);
+  });
+}
+
+function resetLab() {
+  if (!confirm('Are you sure you want to reset this lab? All your progress will be lost.')) return;
+  
+  const currentUser = getCurrentUsername();
+  const users = getUsers();
+  const userIndex = users.findIndex(u => u.username === currentUser);
+  
+  if (userIndex !== -1) {
+    const progress = users[userIndex].progress || {};
+    delete progress[LAB_ID];
+    users[userIndex].progress = progress;
+    saveUsers(users);
+    
+    // Reload the page to reset the lab
+    window.location.reload();
+  }
+}
+
+// Add event listener for submit all button
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('submitAllButton').addEventListener('click', submitAllAnswers);
+});
+</script>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</body>
+</html>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin - CyberLabs Fortress</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
   <script src="scripts/auth.js"></script>
   <script src="scripts/labs.js"></script>
@@ -16,6 +17,9 @@
     <a class="navbar-brand" href="index.html">CyberLabs Fortress</a>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+		<li class="nav-item"><a class="nav-link" href="admin.html">Admin Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active" href="admin-labs.html">Manage Labs</a></li>
         <li class="nav-item d-none nav-profile"><a class="nav-link" href="profile.html">Profile</a></li>
       </ul>
     </div>
@@ -31,40 +35,224 @@
   </div>
 
   <div id="adminContent" class="d-none">
-    <h3>Admin Dashboard</h3>
-    <div class="row">
-      <div class="col-lg-6">
-        <div class="card p-3 mb-3">
-          <h5>Users</h5>
-          <div id="usersTable"></div>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3>Lab Management</h3>
+      <div class="alert alert-info">
+        <strong>Note:</strong> The "Lab Link" should be the HTML filename for the lab (e.g., lab1.html, lab21.html)
       </div>
-
-      <div class="col-lg-6">
-        <div class="card p-3 mb-3">
-          <h5>Add User</h5>
-          <form id="addUserForm">
-            <div class="mb-2"><input id="a_username" placeholder="username" class="form-control" required></div>
-            <div class="mb-2"><input id="a_email" placeholder="email" class="form-control" required></div>
-            <div class="mb-2"><input id="a_password" placeholder="password" class="form-control" required></div>
-            <div class="mb-2">
-              <select id="a_role" class="form-select">
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
+    </div>
+    
+    <ul class="nav nav-tabs mb-4" id="labTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab">Create New Lab</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage" type="button" role="tab">Manage Existing Labs</button>
+      </li>
+    </ul>
+    
+    <div class="tab-content" id="labTabsContent">
+      <!-- Create New Lab Tab -->
+      <div class="tab-pane fade show active" id="create" role="tabpanel">
+        <div class="card p-4">
+          <h5>Create New Lab</h5>
+          <form id="createLabForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Lab Title</label>
+                <input type="text" class="form-control" id="labTitle" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Lab ID (e.g., lab21)</label>
+                <input type="text" class="form-control" id="labId" required>
+                <div class="form-text">This will be used to track progress</div>
+              </div>
             </div>
-            <button class="btn btn-success">Add User</button>
+            
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Difficulty</label>
+                <select class="form-select" id="labDifficulty" required>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="labCategory" required>
+                  <option value="Windows Forensics">Windows Forensics</option>
+                  <option value="Network Analysis">Network Analysis</option>
+                  <option value="Malware Analysis">Malware Analysis</option>
+                  <option value="Memory Forensics">Memory Forensics</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Lab Link</label>
+                <input type="text" class="form-control" id="labLink" required>
+                <div class="form-text">HTML filename (e.g., lab21.html)</div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="labDescription" rows="2" required></textarea>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Evidence File (Optional)</label>
+              <input type="text" class="form-control" id="labEvidenceFile">
+              <div class="form-text">Filename only (e.g., evidence.pf). File should be placed in labs/files/ folder.</div>
+            </div>
+            
+            <hr>
+            
+            <h5>Questions</h5>
+            <div id="questionsContainer">
+              <div class="question-item card p-3 mb-3">
+                <div class="row mb-2">
+                  <div class="col-md-10">
+                    <label class="form-label">Question</label>
+                    <input type="text" class="form-control question-text" placeholder="Enter question text" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Points</label>
+                    <input type="number" class="form-control question-points" value="1" min="1" required>
+                  </div>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Correct Answer</label>
+                  <input type="text" class="form-control question-answer" placeholder="Enter correct answer" required>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger remove-question">Remove Question</button>
+              </div>
+            </div>
+            
+            <button type="button" id="addQuestionBtn" class="btn btn-secondary mb-3">
+              <i class="bi bi-plus-circle"></i> Add Another Question
+            </button>
+            
+            <div class="d-grid">
+              <button type="submit" class="btn btn-success">Create Lab</button>
+            </div>
           </form>
         </div>
-
-        <div class="card p-3">
-          <h5>Leaderboard</h5>
-          <div id="leaderboard"></div>
+      </div>
+      
+      <!-- Manage Existing Labs Tab -->
+      <div class="tab-pane fade" id="manage" role="tabpanel">
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Existing Labs</h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadLabsTable()">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Difficulty</th>
+                  <th>Link</th>
+                  <th>Questions</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="labsTableBody">
+                <!-- Labs will be populated here -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </main>
+
+<!-- Edit Lab Modal -->
+<div class="modal fade" id="editLabModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Lab</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editLabForm">
+          <input type="hidden" id="editLabId">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Lab Title</label>
+              <input type="text" class="form-control" id="editLabTitle" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Lab ID</label>
+              <input type="text" class="form-control" id="editLabIdDisplay" readonly>
+              <div class="form-text">Lab ID cannot be changed</div>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Difficulty</label>
+              <select class="form-select" id="editLabDifficulty" required>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="editLabCategory" required>
+                <option value="Windows Forensics">Windows Forensics</option>
+                <option value="Network Analysis">Network Analysis</option>
+                <option value="Malware Analysis">Malware Analysis</option>
+                <option value="Memory Forensics">Memory Forensics</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Lab Link</label>
+              <input type="text" class="form-control" id="editLabLink" required>
+              <div class="form-text">HTML filename (e.g., lab21.html)</div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="editLabDescription" rows="2" required></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Evidence File (Optional)</label>
+            <input type="text" class="form-control" id="editLabEvidenceFile">
+            <div class="form-text">Filename only (e.g., evidence.pf)</div>
+          </div>
+          
+          <hr>
+          
+          <h5>Questions</h5>
+          <div id="editQuestionsContainer">
+            <!-- Questions will be populated here -->
+          </div>
+          
+          <button type="button" id="addEditQuestionBtn" class="btn btn-secondary mb-3">
+            <i class="bi bi-plus-circle"></i> Add Another Question
+          </button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveLabChanges">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 // Check admin access on page load
@@ -86,78 +274,378 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('adminAccessDenied').classList.add('d-none');
   document.getElementById('adminContent').classList.remove('d-none');
   
-  // Render admin content
-  renderUsers();
-  renderLeaderboard();
+  // Initialize the lab management interface
+  initLabManagement();
 });
 
-function renderUsers(){
-  const users = getUsers();
-  let html = '<table class="table table-sm"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Completed</th><th>Actions</th></tr></thead><tbody>';
-  users.forEach(u => {
-    const completed = Object.values(u.progress || {}).filter(x => x && x.completedOverall).length;
-    html += `<tr>
-      <td>${u.username}</td>
-      <td>${u.email}</td>
-      <td>${u.role}</td>
-      <td>${completed}</td>
-      <td>
-        <button class="btn btn-sm btn-primary" onclick="viewUser('${u.username}')">View</button>
-        <button class="btn btn-sm btn-warning" onclick="toggleRole('${u.username}')">Toggle Role</button>
-        <button class="btn btn-sm btn-danger" onclick="removeUser('${u.username}')">Delete</button>
-      </td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('usersTable').innerHTML = html;
+// Lab management functions
+function initLabManagement() {
+  // Load existing labs
+  loadLabsTable();
+  
+  // Set up event listeners
+  document.getElementById('addQuestionBtn').addEventListener('click', addQuestionField);
+  document.getElementById('createLabForm').addEventListener('submit', handleCreateLab);
+  document.getElementById('saveLabChanges').addEventListener('click', handleSaveLabChanges);
+  
+  // Add one initial question field
+  addQuestionField();
 }
 
-function renderLeaderboard(){
-  const lb = computeLeaderboard();
-  let html = '<ol>';
-  lb.forEach(u => html += `<li>${u.username} - ${u.completedCount} labs</li>`);
-  html += '</ol>';
-  document.getElementById('leaderboard').innerHTML = html;
-}
-
-function viewUser(username){
-  const u = findUser(username);
-  if(!u) return alert('User not found.');
-  const details = `Username: ${u.username}\nEmail: ${u.email}\nRole: ${u.role}\nProgress: ${JSON.stringify(u.progress || {}, null, 2)}`;
-  alert(details);
-}
-
-function removeUser(username){
-  if(!confirm('Delete user ' + username + ' ?')) return;
-  deleteUser(username);
-  renderUsers();
-  renderLeaderboard();
-}
-
-function toggleRole(username){
-  const u = findUser(username);
-  if(!u) return;
-  const newRole = u.role === 'admin' ? 'user' : 'admin';
-  updateUserRole(username, newRole);
-  renderUsers();
-  renderLeaderboard();
-}
-
-document.getElementById('addUserForm').addEventListener('submit',(e)=>{
-  e.preventDefault();
-  const u = document.getElementById('a_username').value.trim();
-  const em = document.getElementById('a_email').value.trim();
-  const p = document.getElementById('a_password').value;
-  const r = document.getElementById('a_role').value;
-  try {
-    addUser({username:u, email:em, password:p, role:r});
-    alert('User added.');
-    renderUsers();
-    renderLeaderboard();
-    e.target.reset();
-  } catch(err) {
-    alert(err.message || 'Failed to add user.');
+// Load labs into the management table
+function loadLabsTable() {
+  const labs = getLabs();
+  const tableBody = document.getElementById('labsTableBody');
+  
+  if (labs.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No labs found</td></tr>';
+    return;
   }
+  
+  let html = '';
+  labs.forEach(lab => {
+    const questionCount = lab.questions ? lab.questions.length : 0;
+    html += `
+      <tr>
+        <td>${lab.id}</td>
+        <td>${lab.title}</td>
+        <td>${lab.category}</td>
+        <td><span class="badge ${getDifficultyBadgeClass(lab.difficulty)}">${lab.difficulty}</span></td>
+        <td>${lab.link}</td>
+        <td>${questionCount}</td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="editLab('${lab.id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteLab('${lab.id}')">Delete</button>
+          <button class="btn btn-sm btn-info" onclick="viewLab('${lab.id}')">View</button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  tableBody.innerHTML = html;
+}
+
+// Get difficulty badge class
+function getDifficultyBadgeClass(difficulty) {
+  switch(difficulty) {
+    case 'beginner': return 'badge-beginner';
+    case 'intermediate': return 'badge-intermediate';
+    case 'advanced': return 'badge-advanced';
+    default: return 'badge-secondary';
+  }
+}
+
+// Add question field to the form
+function addQuestionField(containerId = 'questionsContainer') {
+  const container = document.getElementById(containerId);
+  const questionId = Date.now(); // Unique ID for the question
+  
+  const questionHtml = `
+    <div class="question-item card p-3 mb-3" data-id="${questionId}">
+      <div class="row mb-2">
+        <div class="col-md-10">
+          <label class="form-label">Question</label>
+          <input type="text" class="form-control question-text" placeholder="Enter question text" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Points</label>
+          <input type="number" class="form-control question-points" value="1" min="1" required>
+        </div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Correct Answer</label>
+        <input type="text" class="form-control question-answer" placeholder="Enter correct answer" required>
+      </div>
+      <button type="button" class="btn btn-sm btn-danger remove-question">Remove Question</button>
+    </div>
+  `;
+  
+  container.insertAdjacentHTML('beforeend', questionHtml);
+  
+  // Add event listener to the remove button
+  const newQuestion = container.querySelector(`[data-id="${questionId}"]`);
+  newQuestion.querySelector('.remove-question').addEventListener('click', function() {
+    newQuestion.remove();
+  });
+}
+
+// Handle lab creation
+function handleCreateLab(e) {
+  e.preventDefault();
+  
+  // Get basic lab info
+  const title = document.getElementById('labTitle').value;
+  const id = document.getElementById('labId').value;
+  const difficulty = document.getElementById('labDifficulty').value;
+  const category = document.getElementById('labCategory').value;
+  const link = document.getElementById('labLink').value;
+  const description = document.getElementById('labDescription').value;
+  const evidenceFile = document.getElementById('labEvidenceFile').value;
+  
+  // Validate lab link format
+  if (!link.endsWith('.html')) {
+    alert('Lab Link must be an HTML file (e.g., lab21.html)');
+    return;
+  }
+  
+  // Get questions
+  const questionItems = document.querySelectorAll('#questionsContainer .question-item');
+  if (questionItems.length === 0) {
+    alert('Please add at least one question');
+    return;
+  }
+  
+  const questions = [];
+  questionItems.forEach(item => {
+    const text = item.querySelector('.question-text').value;
+    const points = parseInt(item.querySelector('.question-points').value);
+    const answer = item.querySelector('.question-answer').value;
+    
+    if (text && answer) {
+      questions.push({
+        text,
+        points,
+        answer
+      });
+    }
+  });
+  
+  if (questions.length === 0) {
+    alert('Please add valid questions');
+    return;
+  }
+  
+  // Create lab object
+  const newLab = {
+    id,
+    title,
+    description,
+    difficulty,
+    category,
+    link,
+    questions,
+    evidenceFile: evidenceFile || ''
+  };
+  
+  // Save the lab
+  const labs = getLabs();
+  
+  // Check if lab with this ID already exists
+  if (labs.some(lab => lab.id === id)) {
+    alert('A lab with this ID already exists');
+    return;
+  }
+  
+  // Check if lab with this link already exists
+  if (labs.some(lab => lab.link === link)) {
+    alert('A lab with this link already exists');
+    return;
+  }
+  
+  labs.push(newLab);
+  saveLabs(labs);
+  
+  alert('Lab created successfully!');
+  
+  // Reset form
+  document.getElementById('createLabForm').reset();
+  document.getElementById('questionsContainer').innerHTML = '';
+  
+  // Add one empty question field
+  addQuestionField();
+  
+  // Refresh labs table
+  loadLabsTable();
+  
+  // Switch to manage tab
+  document.getElementById('manage-tab').click();
+}
+
+// Edit lab
+function editLab(labId) {
+  const labs = getLabs();
+  const lab = labs.find(l => l.id === labId);
+  
+  if (!lab) {
+    alert('Lab not found');
+    return;
+  }
+  
+  // Populate the edit form
+  document.getElementById('editLabId').value = lab.id;
+  document.getElementById('editLabIdDisplay').value = lab.id;
+  document.getElementById('editLabTitle').value = lab.title;
+  document.getElementById('editLabDifficulty').value = lab.difficulty;
+  document.getElementById('editLabCategory').value = lab.category;
+  document.getElementById('editLabLink').value = lab.link;
+  document.getElementById('editLabDescription').value = lab.description;
+  document.getElementById('editLabEvidenceFile').value = lab.evidenceFile || '';
+  
+  // Clear questions container
+  const questionsContainer = document.getElementById('editQuestionsContainer');
+  questionsContainer.innerHTML = '';
+  
+  // Add questions
+  if (lab.questions && lab.questions.length > 0) {
+    lab.questions.forEach((question, index) => {
+      addQuestionField('editQuestionsContainer');
+      
+      // Get the last added question and populate it
+      const lastQuestion = questionsContainer.lastElementChild;
+      lastQuestion.querySelector('.question-text').value = question.text;
+      lastQuestion.querySelector('.question-points').value = question.points;
+      lastQuestion.querySelector('.question-answer').value = question.answer;
+    });
+  } else {
+    // Add one empty question field if no questions exist
+    addQuestionField('editQuestionsContainer');
+  }
+  
+  // Show the modal
+  const editModal = new bootstrap.Modal(document.getElementById('editLabModal'));
+  editModal.show();
+}
+
+// Handle saving lab changes
+function handleSaveLabChanges() {
+  const labId = document.getElementById('editLabId').value;
+  const title = document.getElementById('editLabTitle').value;
+  const difficulty = document.getElementById('editLabDifficulty').value;
+  const category = document.getElementById('editLabCategory').value;
+  const link = document.getElementById('editLabLink').value;
+  const description = document.getElementById('editLabDescription').value;
+  const evidenceFile = document.getElementById('editLabEvidenceFile').value;
+  
+  // Validate lab link format
+  if (!link.endsWith('.html')) {
+    alert('Lab Link must be an HTML file (e.g., lab21.html)');
+    return;
+  }
+  
+  // Get questions
+  const questionItems = document.querySelectorAll('#editQuestionsContainer .question-item');
+  if (questionItems.length === 0) {
+    alert('Please add at least one question');
+    return;
+  }
+  
+  const questions = [];
+  questionItems.forEach(item => {
+    const text = item.querySelector('.question-text').value;
+    const points = parseInt(item.querySelector('.question-points').value);
+    const answer = item.querySelector('.question-answer').value;
+    
+    if (text && answer) {
+      questions.push({
+        text,
+        points,
+        answer
+      });
+    }
+  });
+  
+  if (questions.length === 0) {
+    alert('Please add valid questions');
+    return;
+  }
+  
+  // Update the lab
+  const labs = getLabs();
+  const labIndex = labs.findIndex(l => l.id === labId);
+  
+  if (labIndex === -1) {
+    alert('Lab not found');
+    return;
+  }
+  
+  // Check if another lab is using this link
+  if (labs.some((lab, index) => index !== labIndex && lab.link === link)) {
+    alert('Another lab is already using this link');
+    return;
+  }
+  
+  labs[labIndex] = {
+    ...labs[labIndex],
+    title,
+    difficulty,
+    category,
+    link,
+    description,
+    evidenceFile: evidenceFile || '',
+    questions
+  };
+  
+  saveLabs(labs);
+  
+  alert('Lab updated successfully!');
+  
+  // Close the modal
+  const editModal = bootstrap.Modal.getInstance(document.getElementById('editLabModal'));
+  editModal.hide();
+  
+  // Refresh labs table
+  loadLabsTable();
+}
+
+// Delete lab
+function deleteLab(labId) {
+  if (!confirm(`Are you sure you want to delete lab ${labId}? This action cannot be undone.`)) {
+    return;
+  }
+  
+  const labs = getLabs();
+  const updatedLabs = labs.filter(l => l.id !== labId);
+  
+  saveLabs(updatedLabs);
+  
+  alert('Lab deleted successfully');
+  
+  // Refresh labs table
+  loadLabsTable();
+}
+
+// View lab details
+function viewLab(labId) {
+  const labs = getLabs();
+  const lab = labs.find(l => l.id === labId);
+  
+  if (!lab) {
+    alert('Lab not found');
+    return;
+  }
+  
+  let message = `Lab ID: ${lab.id}\nTitle: ${lab.title}\nCategory: ${lab.category}\nDifficulty: ${lab.difficulty}\nLink: ${lab.link}\nDescription: ${lab.description}`;
+  
+  if (lab.evidenceFile) {
+    message += `\nEvidence File: ${lab.evidenceFile}`;
+  }
+  
+  message += `\n\nQuestions:`;
+  lab.questions.forEach((q, index) => {
+    message += `\n${index + 1}. ${q.text} (${q.points} point${q.points !== 1 ? 's' : ''})`;
+    message += `\n   Answer: ${q.answer}`;
+  });
+  
+  alert(message);
+}
+
+// Get labs from localStorage
+function getLabs() {
+  try {
+    return JSON.parse(localStorage.getItem('clf_labs')) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// Save labs to localStorage
+function saveLabs(labs) {
+  localStorage.setItem('clf_labs', JSON.stringify(labs));
+}
+
+// Add event listener for adding questions in edit mode
+document.getElementById('addEditQuestionBtn').addEventListener('click', function() {
+  addQuestionField('editQuestionsContainer');
 });
 </script>
 </body>

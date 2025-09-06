@@ -30,7 +30,7 @@
 
   <!-- Labs List -->
   <section class="container my-5">
-    <h2 class="text-center mb-4">Cybersecurity Labs</h2>
+    <h2 class="text-center mb-4">BlueTeam Labs</h2>
     
     <!-- Search and Filter Controls -->
     <div class="row mb-4">
@@ -85,172 +85,71 @@
   <script src="scripts/auth.js"></script>
   <script src="scripts/common.js"></script>
   <script>
-    // Lab data with categories
-    const labs = [
-      {
-        id: 1,
-        title: "Lab 1: Prefetch File Analysis",
-        description: "Analyze Prefetch files for program execution artifacts.",
-        difficulty: "beginner",
-        category: "Windows Forensics",
-        link: "lab-1.html"
-      },
-      {
-        id: 2,
-        title: "Lab 2: ShimCache Analysis",
-        description: "Examine application compatibility cache entries.",
-        difficulty: "intermediate",
-        category: "Windows Forensics",
-        link: "lab-2.html"
-      },
-      {
-        id: 3,
-        title: "Lab 3: Browser History Forensics",
-        description: "Investigate browser artifacts for activity analysis.",
-        difficulty: "beginner",
-        category: "Windows Forensics",
-        link: "lab-3.html"
-      },
-      {
-        id: 4,
-        title: "Lab 4: Amcache Analysis",
-        description: "Inspect Amcache entries for program installations.",
-        difficulty: "intermediate",
-        category: "Windows Forensics",
-        link: "lab-4.html"
-      },
-      {
-        id: 5,
-        title: "Lab 5: LNK File Analysis",
-        description: "Identify evidence of file and program usage.",
-        difficulty: "beginner",
-        category: "Windows Forensics",
-        link: "lab-5.html"
-      },
-      {
-        id: 6,
-        title: "Lab 6: Event Log Review",
-        description: "Analyze Windows event logs for anomalies.",
-        difficulty: "advanced",
-        category: "Windows Forensics",
-        link: "lab-6.html"
-      },
-      {
-        id: 7,
-        title: "Lab 7: Registry Persistence",
-        description: "Uncover persistence mechanisms in registry keys.",
-        difficulty: "intermediate",
-        category: "Windows Forensics",
-        link: "lab-7.html"
-      },
-      {
-        id: 8,
-        title: "Lab 8: Recycle Bin Artifacts",
-        description: "Investigate deleted file activity.",
-        difficulty: "beginner",
-        category: "Windows Forensics",
-        link: "lab-8.html"
-      },
-      {
-        id: 9,
-        title: "Lab 9: PowerShell Execution Analysis",
-        description: "Trace malicious PowerShell activity.",
-        difficulty: "advanced",
-        category: "Windows Forensics",
-        link: "lab-9.html"
-      },
-      {
-        id: 10,
-        title: "Lab 10: MFT Timeline Analysis",
-        description: "Use MFT entries to reconstruct activity timeline.",
-        difficulty: "advanced",
-        category: "Windows Forensics",
-        link: "lab-10.html"
-      },
-      {
-        id: 11,
-        title: "Lab 11: Network Traffic Analysis",
-        description: "Analyze PCAP files for suspicious activity.",
-        difficulty: "intermediate",
-        category: "Network Analysis",
-        link: "lab-11.html"
-      },
-      {
-        id: 12,
-        title: "Lab 12: DNS Investigation",
-        description: "Examine DNS logs for malicious domains.",
-        difficulty: "beginner",
-        category: "Network Analysis",
-        link: "lab-12.html"
-      },
-      {
-        id: 13,
-        title: "Lab 13: HTTP Attack Analysis",
-        description: "Identify web-based attacks from server logs.",
-        difficulty: "advanced",
-        category: "Network Analysis",
-        link: "lab-13.html"
-      },
-      {
-        id: 14,
-        title: "Lab 14: Firewall Log Analysis",
-        description: "Review firewall logs for policy violations.",
-        difficulty: "intermediate",
-        category: "Network Analysis",
-        link: "lab-14.html"
-      },
-      {
-        id: 15,
-        title: "Lab 15: IDS Alert Triage",
-        description: "Prioritize and investigate IDS alerts.",
-        difficulty: "advanced",
-        category: "Network Analysis",
-        link: "lab-15.html"
-      },
-      {
-        id: 16,
-        title: "Lab 16: Malware Static Analysis",
-        description: "Analyze malware without execution.",
-        difficulty: "intermediate",
-        category: "Malware Analysis",
-        link: "lab-16.html"
-      },
-      {
-        id: 17,
-        title: "Lab 17: Malware Dynamic Analysis",
-        description: "Execute malware in a sandboxed environment.",
-        difficulty: "advanced",
-        category: "Malware Analysis",
-        link: "lab-17.html"
-      },
-      {
-        id: 18,
-        title: "Lab 18: YARA Rule Creation",
-        description: "Create detection rules for malware families.",
-        difficulty: "intermediate",
-        category: "Malware Analysis",
-        link: "lab-18.html"
-      },
-      {
-        id: 19,
-        title: "Lab 19: Memory Acquisition",
-        description: "Capture RAM from a live system.",
-        difficulty: "beginner",
-        category: "Memory Forensics",
-        link: "lab-19.html"
-      },
-      {
-        id: 20,
-        title: "Lab 20: Memory Analysis with Volatility",
-        description: "Analyze memory dumps for evidence of compromise.",
-        difficulty: "advanced",
-        category: "Memory Forensics",
-        link: "lab-20.html"
+    // Get labs from localStorage
+    function getLabs() {
+      try {
+        return JSON.parse(localStorage.getItem('clf_labs')) || [];
+      } catch (e) {
+        return [];
       }
-    ];
+    }
+
+    // Get default labs if none exist
+    function getDefaultLabs() {
+      return [
+        {
+          id: "lab1",
+          title: "Lab 1: Prefetch File Analysis",
+          description: "Analyze Prefetch files for program execution artifacts.",
+          difficulty: "beginner",
+          category: "Windows Forensics",
+          link: "lab1.html",
+          questions: [
+            { text: "What is the name of the executable found in the Prefetch file?", points: 1, answer: "DLIHOST.EXE" },
+            { text: "What was the last execution time? (DD-MM-YYYY HH:MM)", points: 1, answer: "27-11-2024 10:29" },
+            { text: "How many times was the program executed?", points: 1, answer: "8" }
+          ],
+          evidenceFile: "prefetch.pf"
+        },
+        {
+          id: "lab2",
+          title: "Lab 2: ShimCache Analysis",
+          description: "Examine application compatibility cache entries.",
+          difficulty: "intermediate",
+          category: "Windows Forensics",
+          link: "lab2.html",
+          questions: [
+            { text: "What is the first executable found in the ShimCache?", points: 1, answer: "EXAMPLE.EXE" },
+            { text: "When was the first entry last modified?", points: 1, answer: "01-01-2024 08:30" }
+          ],
+          evidenceFile: "shimcache.bin"
+        },
+        {
+          id: "lab3",
+          title: "Lab 3: Browser History Forensics",
+          description: "Investigate browser artifacts for activity analysis.",
+          difficulty: "beginner",
+          category: "Windows Forensics",
+          link: "lab3.html",
+          questions: [
+            { text: "What was the first website visited?", points: 1, answer: "https://www.google.com" },
+            { text: "How many times was the suspicious domain visited?", points: 1, answer: "5" }
+          ],
+          evidenceFile: "browser_history.zip"
+        }
+      ];
+    }
+
+    // Initialize labs if none exist
+    function initLabs() {
+      const labs = getLabs();
+      if (labs.length === 0) {
+        localStorage.setItem('clf_labs', JSON.stringify(getDefaultLabs()));
+      }
+    }
 
     // Render labs based on filters
-    function renderLabs(filteredLabs = labs) {
+    function renderLabs(filteredLabs = []) {
       const container = document.getElementById('labsContainer');
       let html = '';
       
@@ -259,35 +158,40 @@
       const user = currentUser ? getCurrentUserObj() : null;
       const progress = user ? user.progress || {} : {};
       
-      filteredLabs.forEach(lab => {
-        let badgeClass = 'badge-beginner';
-        if (lab.difficulty === 'intermediate') badgeClass = 'badge-intermediate';
-        if (lab.difficulty === 'advanced') badgeClass = 'badge-advanced';
-        
-        // Check if lab is completed
-        const labProgress = progress[`lab${lab.id}`];
-        const isCompleted = labProgress && labProgress.completedOverall;
-        const statusBadge = isCompleted ? 
-          '<span class="badge bg-success ms-2">Completed</span>' : '';
-        
-        html += `
-          <div class="col-md-6 mb-4">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title">${lab.title} ${statusBadge}</h5>
-                <p class="card-text">${lab.description}</p>
-                <div class="mb-2">
-                  <span class="badge ${badgeClass}">${lab.difficulty.charAt(0).toUpperCase() + lab.difficulty.slice(1)}</span>
-                  <span class="badge badge-category">${lab.category}</span>
+      if (filteredLabs.length === 0) {
+        html = '<div class="col-12 text-center"><p>No labs match your search criteria.</p></div>';
+      } else {
+        filteredLabs.forEach(lab => {
+          let badgeClass = 'badge-beginner';
+          if (lab.difficulty === 'intermediate') badgeClass = 'badge-intermediate';
+          if (lab.difficulty === 'advanced') badgeClass = 'badge-advanced';
+          
+          // Check if lab is completed
+          const labProgress = progress[lab.id];
+          const isCompleted = labProgress && labProgress.completedOverall;
+          const statusBadge = isCompleted ? 
+            '<span class="badge bg-success ms-2">Completed</span>' : '';
+          
+          html += `
+            <div class="col-md-6 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">${lab.title} ${statusBadge}</h5>
+                  <p class="card-text">${lab.description}</p>
+                  <div class="mb-2">
+                    <span class="badge ${badgeClass}">${lab.difficulty.charAt(0).toUpperCase() + lab.difficulty.slice(1)}</span>
+                    <span class="badge badge-category">${lab.category}</span>
+                    <span class="badge bg-info">${lab.questions.length} questions</span>
+                  </div>
+                  <a href="${lab.link}" class="btn btn-primary float-end">Start Lab</a>
                 </div>
-                <a href="${lab.link}" class="btn btn-primary float-end">Start Lab</a>
               </div>
             </div>
-          </div>
-        `;
-      });
+          `;
+        });
+      }
       
-      container.innerHTML = html || '<div class="col-12 text-center"><p>No labs match your search criteria.</p></div>';
+      container.innerHTML = html;
     }
 
     // Filter labs based on search, difficulty and category
@@ -296,6 +200,7 @@
       const difficulty = document.getElementById('difficultyFilter').value;
       const category = document.getElementById('categoryFilter').value;
       
+      const labs = getLabs();
       const filteredLabs = labs.filter(lab => {
         const matchesSearch = lab.title.toLowerCase().includes(searchTerm) || 
                              lab.description.toLowerCase().includes(searchTerm);
@@ -310,7 +215,12 @@
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
-      renderLabs();
+      // Initialize labs if none exist
+      initLabs();
+      
+      // Get all labs and render them
+      const labs = getLabs();
+      renderLabs(labs);
       
       // Set up event listeners
       document.getElementById('searchInput').addEventListener('input', filterLabs);
